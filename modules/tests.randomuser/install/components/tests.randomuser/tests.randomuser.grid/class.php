@@ -44,7 +44,7 @@ class testsRrandomuserGrid extends \CBitrixComponent
             "page"=>$nav->getOffset(),
             "results" => $nav->getLimit(),
         );
-        $param=array_merge($param,$sort);
+        //$param=array_merge($param,$sort);
         $uri->addParams($param);
         $json = file_get_contents($uri->getUri());
         $obj = json_decode($json);
