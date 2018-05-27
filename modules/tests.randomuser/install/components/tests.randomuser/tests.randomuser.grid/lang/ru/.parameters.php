@@ -1,0 +1,3 @@
+<?
+$MESS['TESTS_RANDOMUSER_GRID_URL_API'] = 'Источник API';
+?>
