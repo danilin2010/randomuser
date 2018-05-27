@@ -21,9 +21,9 @@ class testsRrandomuserGrid extends \CBitrixComponent
      */
     public function onPrepareComponentParams($params)
     {
-        $result = array(
+        $result = [
             'URL_API' => trim($params['URL_API']),
-        );
+        ];
         return $result;
     }
 
@@ -39,18 +39,18 @@ class testsRrandomuserGrid extends \CBitrixComponent
 
     protected function getRows(PageNavigation $nav,$sort){
         $uri = new Uri($this->arParams['URL_API']);
-        $param=array(
+        $param=[
             "seed"=>$this->GridID,
             "page"=>$nav->getOffset(),
             "results" => $nav->getLimit(),
-        );
+        ];
         //$param=array_merge($param,$sort);
         $uri->addParams($param);
         $json = file_get_contents($uri->getUri());
         $obj = json_decode($json);
         $list=array();
         foreach ($obj->results as $result){
-            $data=array(
+            $data=[
                 "gender"=>$result->gender,
                 "name_title"=>$result->name->title,
                 "name_first"=>$result->name->first,
@@ -69,7 +69,7 @@ class testsRrandomuserGrid extends \CBitrixComponent
                 "picture_large"=>$result->picture->large,
                 "picture_medium"=>$result->picture->medium,
                 "picture_thumbnail"=>$result->picture->thumbnail,
-            );
+            ];
             $list[]=array(
                 'data'=>$data,
             );
@@ -149,7 +149,6 @@ class testsRrandomuserGrid extends \CBitrixComponent
             'ALLOW_PIN_HEADER'          => true,
             'AJAX_OPTION_HISTORY'       => 'N'
         ];
-
         $this->arResult["PARAM"]=$param;
 	}
 	
