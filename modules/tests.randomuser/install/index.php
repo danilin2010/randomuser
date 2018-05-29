@@ -46,7 +46,7 @@ class tests_randomuser extends \CModule
 		{
 			ModuleManager::registerModule($this->MODULE_ID);
             $this->InstallDB();
-            //$this->InstallFiles();
+            $this->InstallFiles();
 		}
 	}
 
@@ -59,7 +59,7 @@ class tests_randomuser extends \CModule
 		{
 			ModuleManager::unRegisterModule($this->MODULE_ID);
             $this->UnInstallDB();
-            //$this->UnInstallFiles();
+            $this->UnInstallFiles();
 		}
 	}
 

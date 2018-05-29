@@ -11,12 +11,7 @@ try
     $arComponentParameters = [
         'GROUPS' => [],
         'PARAMETERS' => [
-            'URL_API' => [
-                'PARENT' => 'BASE',
-                'NAME' => Loc::getMessage('TESTS_RANDOMUSER_GRID_URL_API'),
-                'TYPE' => 'STRING',
-                'DEFAULT' => 'https://randomuser.me/api/',
-            ],
+
         ]
     ];
 }

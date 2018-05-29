@@ -2,10 +2,10 @@
 
 namespace Tests\Randomuser\App\Services;
 
-use Bitrix\Main\Web\Uri;
-use Tests\Randomuser\Domain\Entity\User;
-use Tests\Randomuser\Domain\Factory\UserFactory;
 use Tests\Randomuser\Domain\Repository\UserRepository;
+use Tests\Randomuser\Domain\Helpers\ApiUser;
+use Tests\Randomuser\Domain\Entity\User;
+use Bitrix\Main\UI\PageNavigation;
 
 /**
  * Class Users
@@ -14,60 +14,57 @@ use Tests\Randomuser\Domain\Repository\UserRepository;
 class UserServices
 {
 
-    protected $GridID="testsRrandomuserGrid";
-    protected $recordCount=10;
-    protected $api="https://randomuser.me/api/";
+    /**
+     * @var UserRepository $users
+     */
+    protected $users;
 
     /**
-     * @return User[]
+     * UserServices constructor.
      */
-    public function getApiUser()
+    public function __construct()
     {
-        $uri = new Uri($this->api);
-        $param=[
-            "seed"=>$this->GridID,
-            "results" => $this->recordCount,
-        ];
-        $uri->addParams($param);
-        $json = file_get_contents($uri->getUri());
-        $obj = json_decode($json);
-        $list=array();
-        foreach ($obj->results as $result){
-            $data=[
-                "gender"=>$result->gender,
-                "name_title"=>$result->name->title,
-                "name_first"=>$result->name->first,
-                "name_last"=>$result->name->last,
-                "location_street"=>$result->location->street,
-                "location_city"=>$result->location->city,
-                "location_state"=>$result->location->state,
-                "location_postcode"=>$result->location->postcode,
-                "email"=>$result->email,
-                "login_username"=>$result->login->username,
-                "login_password"=>$result->login->password,
-                "login_salt"=>$result->login->salt,
-                "dob"=>$result->dob,
-                "registered"=>$result->registered,
-                "nat"=>$result->nat,
-                "picture_large"=>$result->picture->large,
-                "picture_medium"=>$result->picture->medium,
-                "picture_thumbnail"=>$result->picture->thumbnail,
-            ];
-
-            $list[]=$data;
-        }
-        return UserFactory::createFromCollection($list);
+        $this->users = new UserRepository();
     }
 
-    public function getRows()
+    private function ChekCount()
     {
-        $res=$this->getApiUser();
-        $users = new UserRepository();
-        foreach ($res as $r)
+        $count=$this->users->getCount();
+        if($count<=0)
         {
-            $users->create($r);
+            $res = ApiUser::get();
+            foreach ($res as $r)
+                $this->users->create($r);
         }
-        //print_r($res);
+    }
+
+    public function getCount()
+    {
+        return $this->users->getCount();
+    }
+
+    public function getNat()
+    {
+        return $this->users->getNat();
+    }
+
+    public function setNat($id,$nat)
+    {
+        $User=new User();
+        $User->setNat($nat);
+        $this->users->update($id,$User);
+    }
+
+    /**
+     * @param array $records
+     * @return User[]
+     */
+    public function getList(PageNavigation $nav,$sort)
+    {
+        $res=[];
+        $this->ChekCount();
+        $res=$this->users->getList($nav,$sort);
+        return $res;
     }
 
 }

@@ -14,6 +14,7 @@ class Email
      * @var string
      */
     private $value;
+
     /**
      * Email constructor.
      * @param string $value
@@ -21,9 +22,9 @@ class Email
      */
     public function __construct($value)
     {
-        if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+        /*if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
             throw new InvalidArgumentException('Некорректный адрес email.');
-        }
+        }*/
         $this->value = $value;
     }
     /**

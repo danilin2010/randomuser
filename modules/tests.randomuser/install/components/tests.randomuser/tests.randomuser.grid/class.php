@@ -6,6 +6,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Grid\Options;
 use Bitrix\Main\UI\PageNavigation;
+use \Tests\Randomuser\App\Services\UserServices;
 use Bitrix\Main\Localization\Loc as Loc;
 
 class testsRrandomuserGrid extends \CBitrixComponent
@@ -13,6 +14,7 @@ class testsRrandomuserGrid extends \CBitrixComponent
 
     protected $GridID="testsRrandomuserGrid";
     protected $recordCount=1000;
+    protected $services;
 
     /**
      * подготавливает входные параметры
@@ -33,45 +35,50 @@ class testsRrandomuserGrid extends \CBitrixComponent
      */
     protected function checkParams()
     {
-        if (strlen($this->arParams['URL_API']) <= 0)
-            throw new Main\ArgumentNullException('URL_API');
+
+    }
+
+    /**
+     * проверяет подключение необходиимых модулей
+     * @throws LoaderException
+     */
+    protected function checkModules()
+    {
+        if (!Main\Loader::includeModule('tests.randomuser'))
+            throw new Main\LoaderException(Loc::getMessage('Не найден модуль randomuser.me'));
+    }
+
+    protected function getArrSelect()
+    {
+        return [
+            "REFERENCE" => $this->services->getNat(),
+            "REFERENCE_ID" =>$this->services->getNat(),
+        ];
+    }
+
+    protected function htmlSelect($id,$val){
+        return SelectBoxFromArray("CHOICE_".$id,
+            $this->getArrSelect(),
+            $val, "", "onchange='elgridUpdate.setNat(".$id.",this);'");
     }
 
     protected function getRows(PageNavigation $nav,$sort){
-        $uri = new Uri($this->arParams['URL_API']);
-        $param=[
-            "seed"=>$this->GridID,
-            "page"=>$nav->getOffset(),
-            "results" => $nav->getLimit(),
-        ];
-        //$param=array_merge($param,$sort);
-        $uri->addParams($param);
-        $json = file_get_contents($uri->getUri());
-        $obj = json_decode($json);
-        $list=array();
-        foreach ($obj->results as $result){
-            $data=[
-                "gender"=>$result->gender,
-                "name_title"=>$result->name->title,
-                "name_first"=>$result->name->first,
-                "name_last"=>$result->name->last,
-                "location_street"=>$result->location->street,
-                "location_city"=>$result->location->city,
-                "location_state"=>$result->location->state,
-                "location_postcode"=>$result->location->postcode,
-                "email"=>$result->email,
-                "login_username"=>$result->login->username,
-                "login_password"=>$result->login->password,
-                "login_salt"=>$result->login->salt,
-                "dob"=>$result->dob,
-                "registered"=>$result->registered,
-                "nat"=>$result->nat,
-                "picture_large"=>$result->picture->large,
-                "picture_medium"=>$result->picture->medium,
-                "picture_thumbnail"=>$result->picture->thumbnail,
-            ];
+
+        $Rows=$this->services->getList($nav,$sort);
+        $list=[];
+        foreach ($Rows as $result){
+            $data=$result->getArray();
+            if($data["dob"])
+                $data["dob"]=$data["dob"]->format('Y-m-d H:i:s');
+            if($data["registered"])
+                $data["registered"]=$data["registered"]->format('Y-m-d H:i:s');
+            $columns=$data;
+            $columns["nat"]=$this->htmlSelect($result->getId(),$data["nat"]);
             $list[]=array(
+                "id"=>$result->getId(),
                 'data'=>$data,
+                'columns'=>$columns,
+                "editable"=>true,
             );
         }
         return $list;
@@ -79,29 +86,32 @@ class testsRrandomuserGrid extends \CBitrixComponent
 
     protected function getColums(){
         return [
-            ['id' => 'gender', 'name' => Loc::getMessage('gender'), 'default' => true],
-            ['id' => 'name_title', 'name' => Loc::getMessage('name_title'), 'default' => true],
-            ['id' => 'name_first', 'name' => Loc::getMessage('name_first'), 'default' => true],
-            ['id' => 'name_last', 'name' => Loc::getMessage('name_last'), 'default' => true],
-            ['id' => 'location_street', 'name' => Loc::getMessage('location_street'), 'default' => true],
-            ['id' => 'location_city', 'name' => Loc::getMessage('location_city'), 'default' => true],
-            ['id' => 'location_state', 'name' => Loc::getMessage('location_state'), 'default' => true],
-            ['id' => 'location_postcode', 'name' => Loc::getMessage('location_postcode'), 'default' => true],
-            ['id' => 'email', 'name' => Loc::getMessage('email'), 'default' => true],
-            ['id' => 'login_username', 'name' => Loc::getMessage('login_username'), 'default' => true],
-            ['id' => 'login_password', 'name' => Loc::getMessage('login_password'), 'default' => true],
-            ['id' => 'login_salt', 'name' => Loc::getMessage('login_salt'), 'default' => true],
-            ['id' => 'dob', 'name' => Loc::getMessage('dob'), 'default' => true],
-            ['id' => 'registered', 'name' => Loc::getMessage('registered'), 'default' => true],
-            ['id' => 'nat', 'name' => Loc::getMessage('nat'), 'default' => true],
+            ['id' => 'id', 'name' => 'id', 'default' => true, 'sort' => 'id'],
+            ['id' => 'gender','name' => Loc::getMessage('gender'),'default' => true, 'sort' => 'gender'],
+            ['id' => 'name_title', 'name' => Loc::getMessage('name_title'), 'default' => true, 'sort' => 'name_title'],
+            ['id' => 'name_first', 'name' => Loc::getMessage('name_first'), 'default' => true, 'sort' => 'name_first'],
+            ['id' => 'name_last', 'name' => Loc::getMessage('name_last'), 'default' => true, 'sort' => 'name_last'],
+            ['id' => 'location_street', 'name' => Loc::getMessage('location_street'), 'default' => true, 'sort' => 'location_street'],
+            ['id' => 'location_city', 'name' => Loc::getMessage('location_city'), 'default' => true, 'sort' => 'location_city'],
+            ['id' => 'location_state', 'name' => Loc::getMessage('location_state'), 'default' => true, 'sort' => 'location_state'],
+            ['id' => 'location_postcode', 'name' => Loc::getMessage('location_postcode'), 'default' => true, 'sort' => 'location_postcode'],
+            ['id' => 'email', 'name' => Loc::getMessage('email'), 'default' => true, 'sort' => 'email'],
+            ['id' => 'login_username', 'name' => Loc::getMessage('login_username'), 'default' => true, 'sort' => 'login_username'],
+            ['id' => 'login_password', 'name' => Loc::getMessage('login_password'), 'default' => true, 'sort' => 'login_password'],
+            ['id' => 'login_salt', 'name' => Loc::getMessage('login_salt'), 'default' => true, 'sort' => 'login_salt'],
+            ['id' => 'dob', 'name' => Loc::getMessage('dob'), 'default' => true, 'sort' => 'dob'],
+            ['id' => 'registered', 'name' => Loc::getMessage('registered'), 'default' => true, 'sort' => 'registered'],
+            ['id' => 'nat', 'name' => Loc::getMessage('nat'), 'default' => true, 'sort' => 'nat'],
         ];
     }
-	
-	/**
+
+    /**
 	 * получение результатов
 	 */
 	protected function getResult()
 	{
+        $this->services=new UserServices();
+        CJSCore::Init(array('ajax'));
         $grid_options = new Options($this->GridID);
         $sort = $grid_options->GetSorting(
             [
@@ -115,9 +125,10 @@ class testsRrandomuserGrid extends \CBitrixComponent
             ->setPageSize($nav_params['nPageSize'])
             ->initFromUri();
 
-        $nav->setRecordCount($this->recordCount);
+        $nav->setRecordCount($this->services->getCount());
         $list=$this->getRows($nav,$sort["sort"]);
         $param=[
+            'EDITABLE' => true,
             'GRID_ID' => $this->GridID,
             'COLUMNS' => $this->getColums(),
             'ROWS' => $list,
@@ -159,6 +170,7 @@ class testsRrandomuserGrid extends \CBitrixComponent
 	{
 		try
 		{
+            $this->checkModules();
             $this->checkParams();
 			$this->getResult();
 			$this->includeComponentTemplate();

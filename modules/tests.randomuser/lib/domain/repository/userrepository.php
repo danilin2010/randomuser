@@ -9,6 +9,8 @@ use Bitrix\Main\Type;
 use DateTime;
 use InvalidArgumentException;
 use Tests\Randomuser\Domain\Helpers\FactoryConverter;
+use Bitrix\Main\Entity;
+use Bitrix\Main\UI\PageNavigation;
 
 /**
  * Class Users
@@ -23,9 +25,7 @@ class UserRepository
      */
     public function GetDateTime(DateTime $datetime)
     {
-        $dob=new Type\DateTime();
-        $dob->createFromPhp($datetime);
-        return $dob;
+        return Type\DateTime::createFromPhp($datetime);
     }
 
     /**
@@ -80,9 +80,13 @@ class UserRepository
     {
         if($id<=0)
             throw new InvalidArgumentException('Неправильный id');
-        $result=$this->db->GetQuery("SELECT * FROM guestbook_user WHERE id=".$id);
-        $r=$result->fetch_array(MYSQLI_ASSOC);
-        return UserFactory::createFromArray($r);
+        $result=RandomuserUserTable::getList(array(
+            'filter' => array('=ID' => $id)
+        ));
+        if ($row = $result->fetch(new FactoryConverter()))
+            return UserFactory::createFromArray($row);
+        else
+            throw new InvalidArgumentException('Запись не найдена');
     }
 
     /**
@@ -100,9 +104,14 @@ class UserRepository
     /**
      * @return User[]
      */
-    public function getList()
+    public function getList(PageNavigation $nav,$sort)
     {
-        $parameters=[];
+        $parameters=[
+            'order'=>$sort,
+            "cache"=>["ttl"=>3600],
+            'limit'=>$nav->getLimit(),
+            "offset"=>$nav->getOffset(),
+        ];
         $result = RandomuserUserTable::getList($parameters);
         $FactoryConverter=new FactoryConverter();
         $rows=[];
@@ -111,17 +120,40 @@ class UserRepository
         return UserFactory::createFromCollection($rows);
     }
 
-    /*
-use \Bitrix\Main\Loader;
-use \Tests\Randomuser\App\Services\UserServices;
-use \Tests\Randomuser\Domain\Repository\UserRepository;
-Loader::includeModule('tests.randomuser');
+    /**
+     * @return int
+     */
+    public function getCount()
+    {
+        $result=RandomuserUserTable::getList(array(
+            'select' => ['CNT'],
+            "cache"=>["ttl"=>3600],
+            'runtime' => [
+                new Entity\ExpressionField('CNT', 'COUNT(*)')
+            ]
+        ));
+        if ($row = $result->fetch(new FactoryConverter()))
+            return $row["CNT"];
+        return 0;
+    }
 
-//$Services=new UserServices();
-//$Rows=$Services->getRows();
+    /**
+     * @return array
+     */
+    public function getNat()
+    {
+        $r=[];
+        $result=RandomuserUserTable::getList(array(
+            'order'=>['nat'=>'ASC'],
+            'group' => ['nat'],
+            'select' => ['nat'],
+            "cache"=>["ttl"=>3600],
+        ));
+        while ($row = $result->fetch(new FactoryConverter()))
+        {
+            $r[]=$row['nat'];
+        }
+        return $r;
+    }
 
-$Services=new UserRepository();
-$Rows=$Services->getList();
-print_r($Rows);
-*/
 }

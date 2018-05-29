@@ -13,6 +13,27 @@ use DateTime;
  */
 class UserFactory
 {
+
+    /**
+     * @param  $data
+     * @return DateTime
+     */
+
+    public static function DateRecognition($data)
+    {
+        if ($data instanceof DateTime) {
+            return $data;
+        }elseif(is_numeric ($data)){
+            $d=new DateTime;
+            $d->setTimestamp((int)$data);
+            return $d;
+        }elseif(strlen($data)>0){
+            return new DateTime($data);
+        }else{
+            return new DateTime;
+        }
+    }
+
     /**
      * @param array $params
      * @return User
@@ -47,10 +68,12 @@ class UserFactory
             $user->setLoginPassword(trim($params['login_password']));
         if(strlen($params['login_salt'])>0)
             $user->setLoginSalt(trim($params['login_salt']));
-        if(strlen($params['dob'])>0)
-            $user->setDob(new DateTime($params["dob"]));
-        if(strlen($params['registered'])>0)
-            $user->setRegistered(new DateTime($params["registered"]));
+
+        if($params['dob'])
+            $user->setDob(self::DateRecognition($params['dob']));
+        if($params['registered'])
+            $user->setRegistered(self::DateRecognition($params['registered']));
+
         if(strlen($params['nat'])>0)
             $user->setNat(trim($params['nat']));
         if(strlen($params['picture_large'])>0)
