@@ -3,6 +3,7 @@ use \Bitrix\Main\ModuleManager;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\IO\Directory;
+use Bitrix\Main\IO\File;
 
 Loc::loadMessages(__FILE__);
 
@@ -44,7 +45,8 @@ class tests_randomuser extends \CModule
 		if ($USER->IsAdmin())
 		{
 			ModuleManager::registerModule($this->MODULE_ID);
-            $this->InstallFiles();
+            $this->InstallDB();
+            //$this->InstallFiles();
 		}
 	}
 
@@ -56,7 +58,8 @@ class tests_randomuser extends \CModule
 		if ($USER->IsAdmin())
 		{
 			ModuleManager::unRegisterModule($this->MODULE_ID);
-            $this->UnInstallFiles();
+            $this->UnInstallDB();
+            //$this->UnInstallFiles();
 		}
 	}
 
@@ -74,6 +77,33 @@ class tests_randomuser extends \CModule
     function UnInstallFiles()
     {
         Directory::deleteDirectory(Application::getDocumentRoot() . "/bitrix/components/tests.randomuser/");
+        return true;
+    }
+
+    function getDBFilePatch($file,$DBType)
+    {
+        $filePatch = "";
+        $filePatch .= Application::getDocumentRoot();
+        $filePatch .= getLocalPath("modules/{$this->MODULE_ID}/install/db/".$DBType."/".$file);
+        return $filePatch;
+    }
+
+    function runSqlFile($file)
+    {
+        $connection = Application::getConnection();
+        $file=new File($this->getDBFilePatch($file,$connection->getType()));
+        $connection->executeSqlBatch($file->getContents());
+    }
+
+    function InstallDB()
+    {
+        $this->runSqlFile("install.sql");
+        return true;
+    }
+
+    function UnInstallDB()
+    {
+        $this->runSqlFile("uninstall.sql");
         return true;
     }
 }
